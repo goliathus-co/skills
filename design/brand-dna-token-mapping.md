@@ -90,9 +90,32 @@ Given the above + `@theme inline`:
 - `text-rust`, `bg-rust` — signature accent (ration strictly per Brand DNA)
 - `bg-graphite`, `text-graphite` — inverse sections
 
+## Spacing — Tier 2 namespace must match Tailwind 4 convention
+
+Tailwind 4 uses `--spacing-*` as its spacing scale (both for utility generation and var() references). Components that use `var(--spacing-6)` in component-scoped CSS will silently fall back to literal values if the token is named `--space-6` only.
+
+**Rule:** define both Tier 1 (`--space-*`) and Tier 2 aliases (`--spacing-*`) in tokens.css. Wire Tailwind via `@theme inline { --spacing: 0.25rem; }`.
+
+```css
+/* tokens.css — Tier 1 */
+--space-6: 1.5rem;
+
+/* tokens.css — Tier 2 (matches Tailwind 4 convention) */
+--spacing-6: var(--space-6);
+
+/* global.css — @theme inline */
+--spacing: 0.25rem;  /* base unit → p-6 = 6 × 0.25rem = 1.5rem */
+```
+
+This ensures:
+1. Component CSS `var(--spacing-6)` resolves without fallback
+2. Tailwind utility `p-6` resolves to the same 1.5rem
+3. A Brand DNA spacing change in `--space-6` propagates to both paths
+
 ## Anti-patterns
 
 ❌ `style="color: #7d2e1f"` — hardcoded hex in component
 ❌ `text-[#7d2e1f]` — arbitrary value bypasses token system
 ❌ `var(--color-copper-600)` in component — Tier 1 leaking to component
 ❌ `theme.extend.colors` in tailwind.config.ts — Tailwind v3 pattern, incompatible with v4
+❌ `var(--spacing-6, 1.5rem)` with only `--space-6` defined — silent fallback, token chain broken
